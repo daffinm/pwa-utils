@@ -1,0 +1,13 @@
+{
+  "name": "U p L i f t ~ from Human Givens",
+  "short_name": "U p L i f t",
+  "description": "HG UpLift App (PWA)",
+  "background_color": "#0C6A8B",
+  "theme_color": "#0C6A8B",
+  "start_url": "/index.html",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "scope": ".",
+  "dir": "ltr",
+  "lang": "en-UK"
+}
