@@ -1,0 +1,23 @@
+{
+  "name": "test-service-worker-update-flow",
+  "version": "1.0.0",
+  "description": "Project for exploring and documenting how to get the service worker update working perfectly.",
+  "main": "sw.js",
+  "scripts": {
+    "start": "http-server ./www-deploy -c-1 -p 5001"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daffinm/test-service-worker-update-flow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daffinm/test-service-worker-update-flow/issues"
+  },
+  "homepage": "https://github.com/daffinm/test-service-worker-update-flow#readme",
+  "devDependencies": {
+    "http-server": "^0.12.1"
+  }
+}

@@ -6,9 +6,8 @@
     <meta id="meta-viewport" name="viewport"
           content="user-scalable=yes, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
 
-    <script src="sw-client.js"></script>
-    <script src="debug.js"></script>
-
+    <script src="js/sw-client.js"></script>
+    <script src="js/debug.js"></script>
     <link rel="manifest" href="manifest.json">
     <style>
         #status-messages {
@@ -72,7 +71,7 @@
             alert(`No update found\n\nYou are already on the latest version.`);
         },
         updateError() {
-            alert(`Error\n\n'Cannot check for updates.\nAre you offline?`);
+            alert(`Error\n\nCannot check for updates.\n\nAre you offline?`);
         },
         updateFoundReloadNeeded() {
             // Called when an update is found but the client is not controlled by the service worker. This means that
@@ -83,7 +82,7 @@
             app.reload();
         },
         confirmUpdateWithUser(callback) {
-            if (confirm(`Update available!\n\nAn update is available for this app.\nUse it now?`)) {
+            if (confirm(`Update available!\n\nAn update is available for this app.\n\nUse it now?`)) {
                 callback(true);
             }
             else {

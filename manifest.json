@@ -1,7 +1,7 @@
 {
-  "name": "U p L i f t ~ from Human Givens",
-  "short_name": "U p L i f t",
-  "description": "HG UpLift App (PWA)",
+  "name": "Test Service Worker Update Flow",
+  "short_name": "Test SW Flow",
+  "description": "How do we get Service Worker updates working?",
   "background_color": "#0C6A8B",
   "theme_color": "#0C6A8B",
   "start_url": "/index.html",

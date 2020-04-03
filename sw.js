@@ -12,7 +12,7 @@ function logRegistration(reg, message, console) {
     console.log(message);
 }
 
-importScripts('debug.js');
+importScripts('js/debug.js');
 const debug = new Debug(DEBUG_LOGGING, 'Service Worker', 'indianred');
 debug.heading('New Service Worker installing...');
 logRegistration(self.registration, 'At startup: registration state', debug);
