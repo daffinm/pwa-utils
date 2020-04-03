@@ -82,6 +82,8 @@ self.addEventListener('activate', function(event) {
 workbox.routing.registerRoute(
     new RegExp('.*\.(html|ico|js|json)'),
     // new RegExp('.*\.(ico|js|json)'),
+    // Use NetworkFirst strategy so we always get the updated copy from the network, and cache this.
+    // Was using StaleFirst but this means you are always one step behind reality.
     new workbox.strategies.NetworkFirst({
         matchOptions: {
             ignoreSearch: true,
