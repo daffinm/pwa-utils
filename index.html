@@ -66,17 +66,19 @@
     let message = (underControl ? 'This page IS controlled by a Service Worker' : 'This page is NOT controlled by a Service Worker');
     $messages.className = className;
     $messages.innerHTML = message;
+    // The callback object - implements an interface (I wish) that enables us to decouple the service worker client from
+    // the app that's using it.
     const app = {
         noUpdateFound() {
             alert(`No update found\n\nYou are already on the latest version.`);
         },
-        updateError() {
+        updateError(err) {
             alert(`Error\n\nCannot check for updates.\n\nAre you offline?`);
         },
         updateFoundReloadNeeded() {
             // Called when an update is found but the client is not controlled by the service worker. This means that
-            // the update will activate automatically. So the client will need to play catch up: to reload so that
-            // it becomes controlled by it.
+            // the update will activate automatically. So the client will need to play catch up with the service worker:
+            // to reload so that it becomes controlled by it.
             // Inform the user with OK dialog and reload when this returns (to give some sense of control).
             alert('Update found!\n\nApp will reload when you press OK.');
             app.reload();
@@ -89,7 +91,7 @@
                 callback(false);
             }
         },
-        reload(updateFound) {
+        reload() {
             debug.warn('Reloading app...');
             document.body.style = 'color:red;';
             setTimeout(() => window.location.reload(), 1000);

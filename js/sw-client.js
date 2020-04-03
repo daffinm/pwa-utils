@@ -59,7 +59,7 @@ function ServiceWorkerClient(url, console, ui) {
         })
             .catch(function(err){
                 console.error('Error getting service worker registration: ', err);
-                ui.updateError();
+                ui.updateError(err);
             });
     };
     //--------------------------------------------------------------------------------------------------------------
@@ -99,8 +99,13 @@ function ServiceWorkerClient(url, console, ui) {
             updateButtonHasBeenPressed = true;
         }
         if (!updateButtonPressed && updateButtonHasBeenPressed) {
-            // Block call from waiting listener which comes after call from update checker the first time.
-            console.log('Blocking attempt to handle update.');
+            // Block call from the waiting promise which comes after call from update checker the first time.
+            // Otherwise we run the update routine twice that time.
+            // You may say "well, why not just let the waiting listener trigger all updates?" Because if we do this,
+            // and the user rejects an update, then the waiting listener will not fire again until we reload.
+            // Subsequent clicks on the 'check for updates' button will not find any, even though one is still waiting
+            // to be told to skip.
+            console.log('Blocking redundant attempt to handle update.');
             return;
         }
         let newSw = (reg.installing || reg.waiting);
