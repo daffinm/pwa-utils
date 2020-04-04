@@ -1,12 +1,22 @@
 const DEBUG_LOGGING = true;
 const WORKBOX_DEBUG = false;
 
+function logRegistration(reg, message) {
+    message = message ? message : 'Service Worker registration';
+    const yes = '✓';
+    const no = '𐄂';
+    let installing = reg.installing ? yes : no;
+    let waiting = reg.waiting ? yes : no;
+    let active = reg.active ? yes : no;
+    message = `${message}\n - installing: ${installing}\n - waiting:    ${waiting}\n - active:     ${active}`;
+    debug.log(message);
+}
+
 importScripts('js/debug-console.js');
-importScripts('js/sw-utils.js');
 const debug = new DebugConsole(DEBUG_LOGGING, 'Service Worker', 'indianred');
 debug.heading('New Service Worker installing...');
 
-SwUtils.logRegistration(self.registration, 'At startup: registration state', debug);
+logRegistration(self.registration, 'At startup: registration state', debug);
 
 const WORKBOX_VERSION = "5.1.2";
 importScripts(`https://storage.googleapis.com/workbox-cdn/releases/${WORKBOX_VERSION}/workbox-sw.js`);
@@ -25,7 +35,7 @@ self.addEventListener('message', (event) => {
     }
 });
 self.addEventListener('install', function (event) {
-    SwUtils.logRegistration(self.registration, 'On install: registration state', debug);
+    logRegistration(self.registration, 'On install: registration state', debug);
 });
 const FIRST_TIME = (!self.registration.active);
 if (FIRST_TIME) {
@@ -45,7 +55,7 @@ self.clients.matchAll().then(function (clientArray) {
 // If there are no controlled clients then a new service worker will activate automatically, even if there
 // is a previous active version. And it will carry on doing this each time until a client becomes controlled.
 self.addEventListener('activate', function(event) {
-    SwUtils.logRegistration(self.registration, 'On activate: registration state', debug);
+    logRegistration(self.registration, 'On activate: registration state', debug);
     // Note. Our client page is initially uncontrolled by a service worker because it was not served by a the
     // service worker. So how do we bring it under control in a way that does not take control away from the user?
     // ---

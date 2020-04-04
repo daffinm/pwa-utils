@@ -1,5 +1,4 @@
 // Uses assert from assert.js
-// Uses SwUtils.logRegistration from sw-utils.js
 
 function ServiceWorkerClient(url, debug, ui) {
     assert.isDefined(url);
@@ -31,7 +30,7 @@ function ServiceWorkerClient(url, debug, ui) {
         debug.log('Registering service worker...');
         navigator.serviceWorker.register(url)
             .then(function (reg) {
-                SwUtils.logRegistration(reg, 'Service worker registered', debug);
+                logRegistration(reg, 'Service worker registered', debug);
                 navigator.serviceWorker.waiting.then(function(reg) {
                     debug.log('New waiting service worker found.');
                     handleUpdateTo(reg, false);
@@ -47,7 +46,7 @@ function ServiceWorkerClient(url, debug, ui) {
         navigator.serviceWorker.register(url).then(async function (reg) {
             await fetch(url, {method: 'HEAD'}); // trigger error if offline.
             reg.update().then(function (reg) {
-                SwUtils.logRegistration(reg, 'Checking for updates', debug);
+                logRegistration(reg, 'Checking for updates', debug);
                 if (updateIsAvailable(reg)) {
                     debug.log('Update found by update checker. Handling it...');
                     handleUpdateTo(reg, updateButtonPressed);
@@ -68,6 +67,16 @@ function ServiceWorkerClient(url, debug, ui) {
     //--------------------------------------------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------------------------------------------
+    function logRegistration(reg, message) {
+        message = message ? message : 'Service Worker registration';
+        const yes = '✓';
+        const no = '𐄂';
+        let installing = reg.installing ? yes : no;
+        let waiting = reg.waiting ? yes : no;
+        let active = reg.active ? yes : no;
+        message = `${message}\n - installing: ${installing}\n - waiting:    ${waiting}\n - active:     ${active}`;
+        debug.log(message);
+    }
     function updateIsAvailable(reg) {
         let newSw = (reg.installing || reg.waiting);
         let activeSw = reg.active;
