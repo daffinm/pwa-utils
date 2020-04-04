@@ -137,3 +137,36 @@ function ServiceWorkerClient(url, debug, ui) {
         }
     }
 }
+
+// Demo ui callback object - implements an interface (I wish) that enables us to decouple the service worker
+// client from the app that's using it.
+function SimpleUI(debug) {
+    this.noUpdateFound = function () {
+        alert(`No update found\n\nYou are already on the latest version.`);
+    };
+    this.updateError = function (err) {
+        alert(`Error\n\nCannot check for updates.\n\nAre you offline?`);
+    };
+    this.updateFoundReloadNeeded = function () {
+        // Called when an update is found but the client is not controlled by the service worker. This means that
+        // the update will activate automatically. So the client will need to play catch up with the service worker:
+        // to reload so that it becomes controlled by it.
+        // Inform the user with OK dialog and reload when this returns (to give some sense of control).
+        alert('Update found!\n\nApp will reload when you press OK.');
+        this.reload();
+    };
+    this.confirmUpdateWithUser = function (callback) {
+        if (confirm(`Update available!\n\nAn update is available for this simpleUI.\n\nUse it now?`)) {
+            callback(true);
+        }
+        else {
+            callback(false);
+        }
+    };
+    this.reload = function () {
+        debug.warn('Reloading app...');
+        document.body.style = 'color:red;';
+        setTimeout(() => window.location.reload(), 1000);
+    };
+}
+

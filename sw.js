@@ -69,9 +69,9 @@ self.addEventListener('activate', function(event) {
 });
 
 // Note: does not matter if you stick the index.html in precache or runtime cache. Does not matter which cache stragegy
-// you use. First time the app runs it runs it will not be controlled by a service worker. Because the page loads, then
+// you use. First time the simpleUI runs it runs it will not be controlled by a service worker. Because the page loads, then
 // registers the service worker for the first time, which then installs and activates and starts handling fetches from the
-// app clients.
+// simpleUI clients.
 // ---
 // workbox.precaching.precacheAndRoute([
 //     {"revision":"001","url":"index.html"},
@@ -87,3 +87,5 @@ workbox.routing.registerRoute(
         }
     })
 );
+
+

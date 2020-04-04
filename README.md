@@ -16,18 +16,18 @@ feel confident that my apps will work well and I can stop thinking about it.
 The simple use case here (which I suspect is the main one) is:
 
 1. Publish update to PWA.
-1. User is notified next time they: reload/restart the app, or press a 'check for updates' button somewhere in the UI, or the update 
+1. User is notified next time they: reload/restart the simpleUI, or press a 'check for updates' button somewhere in the UI, or the update 
 is discovered because of some kind of periodic background check (I think that's it).
 1. User is given the option to use the update now or later. 
    * Updates cannot be rejected indefinitely in PWA land.
    * By the time the user hears of the update it has already been installed and is waiting to become active.
-1. If the user accepts the update the new service worker version is activated and, once this happens, the app reloads to get
+1. If the user accepts the update the new service worker version is activated and, once this happens, the simpleUI reloads to get
 itself in sync with the new back end.
 1. If the user rejects the update they carry on using the old version of the service worker and UI until next time one of the 
 three things mentioned in step 2 happens again. 
 1. At this point they will get the option, again, to accept or reject the update for the time being. 
    * The fact that they may have rejected an update before should not stop them changing their mind later.
-1. The only exception to this is when the app is first accessed and the first version of the service worker is installed
+1. The only exception to this is when the simpleUI is first accessed and the first version of the service worker is installed
 on the user's machine (browser). 
    * At this point the page ('client') will not be controlled, so any update will activate 
 automatically. 
@@ -38,7 +38,7 @@ The code here attempt so do all of this as simply as possible.
 
 Have I missed anything, or misunderstood, or made it too complicated? 
 
-## Running and playing with the app
+## Running and playing with the simpleUI
 
 1. Run project using `npm start` and goto http://localhost:5001 in Chrome.
 1. Open the dev tools console asap and check the console messages to see what's happening.
