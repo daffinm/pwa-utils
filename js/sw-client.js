@@ -156,7 +156,7 @@ function SimpleUI(debug) {
         this.reload();
     };
     this.confirmUpdateWithUser = function (callback) {
-        if (confirm(`Update available!\n\nAn update is available for this simpleUI.\n\nUse it now?`)) {
+        if (confirm(`Update available!\n\nAn update is available for this app.\n\nUse it now?`)) {
             callback(true);
         }
         else {
