@@ -1,13 +1,11 @@
+# PWA Utils
+Project for some reusable bits and pieces for PWAs. Experimental.
+* CDN https://cdn.jsdelivr.net/gh/daffinm/pwa-utils@latest/
+
 # Test Service Worker Update Flow
-Project for exploring and documenting how to get the service worker update flow working perfectly, and for developing
-other reusable bits and pieces for PWAs.
+The main thing I am starting with is exploring and documenting how to get the service worker update flow working perfectly (or well enough). 
 
 Comments and improvements welcome.
-
-CDN link: https://cdn.jsdelivr.net/gh/daffinm/pwa-utils/
-
-I am in no way an expert in any of this. Just an old-fashioned java programmer trying to make sense of all this so I can 
-feel confident that my apps will work well and I can stop thinking about it.
 
 ## Purpose of this project
 
