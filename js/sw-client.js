@@ -1,12 +1,15 @@
-function ServiceWorkerClient(url, console, ui) {
-    assert.isDefined(url, 'url');
-    assert.isDefined(console, 'console');
-    assert.isDefined(ui, 'ui');
-    assert.isDefined(ui.noUpdateFound, 'ui.noUpdateFound()');
-    assert.isDefined(ui.updateError, 'ui.updateError()');
-    assert.isDefined(ui.updateFoundReloadNeeded, 'ui.updateFoundReloadNeeded()');
-    assert.isDefined(ui.confirmUpdateWithUser, 'ui.confirmUpdateWithUser()');
-    assert.isDefined(ui.reload, 'ui.reload()');
+// Uses assert from assert.js
+// Uses SwUtils.logRegistration from sw-utils.js
+
+function ServiceWorkerClient(url, debug, ui) {
+    assert.isDefined(url);
+    assert.isDefined(debug);
+    assert.isDefined(ui);
+    assert.isFunction(ui.noUpdateFound);
+    assert.isFunction(ui.updateError);
+    assert.isFunction(ui.updateFoundReloadNeeded);
+    assert.isFunction(ui.confirmUpdateWithUser);
+    assert.isFunction(ui.reload);
 
     // Brilliant prolyfil by dfabulich
     // https://github.com/w3c/ServiceWorker/issues/1222#issuecomment-351566460
@@ -25,18 +28,18 @@ function ServiceWorkerClient(url, console, ui) {
         });
     }
     this.register = function () {
-        console.log('Registering service worker...');
+        debug.log('Registering service worker...');
         navigator.serviceWorker.register(url)
             .then(function (reg) {
-                logRegistration(reg, 'Service worker registered');
+                SwUtils.logRegistration(reg, 'Service worker registered', debug);
                 navigator.serviceWorker.waiting.then(function(reg) {
-                    console.log('New waiting service worker found.');
+                    debug.log('New waiting service worker found.');
                     handleUpdateTo(reg, false);
                 });
                 listenForControllerChangeAndReloadWhenItDoes();
             })
             .catch(function (err) {
-                console.error('Error registering service worker: ', err);
+                debug.error('Error registering service worker: ', err);
             });
     };
     this.update = function (updateButtonPressed) {
@@ -44,13 +47,13 @@ function ServiceWorkerClient(url, console, ui) {
         navigator.serviceWorker.register(url).then(async function (reg) {
             await fetch(url, {method: 'HEAD'}); // trigger error if offline.
             reg.update().then(function (reg) {
-                logRegistration(reg, 'Checking for updates');
+                SwUtils.logRegistration(reg, 'Checking for updates', debug);
                 if (updateIsAvailable(reg)) {
-                    console.log('Update found by update checker. Handling it...');
+                    debug.log('Update found by update checker. Handling it...');
                     handleUpdateTo(reg, updateButtonPressed);
                 }
                 else {
-                    console.log('No update found.');
+                    debug.log('No update found.');
                     if (updateButtonPressed) {
                         ui.noUpdateFound();
                     }
@@ -58,7 +61,7 @@ function ServiceWorkerClient(url, console, ui) {
             })
         })
             .catch(function(err){
-                console.error('Error getting service worker registration: ', err);
+                debug.error('Error getting service worker registration: ', err);
                 ui.updateError(err);
             });
     };
@@ -71,25 +74,15 @@ function ServiceWorkerClient(url, console, ui) {
         let isUpdate = (newSw && activeSw);
         return isUpdate;
     }
-    function logRegistration(reg, message) {
-        message = message ? message : 'Service Worker registration';
-        const yes = '✓';
-        const no = '𐄂';
-        let installing = reg.installing ? yes : no;
-        let waiting = reg.waiting ? yes : no;
-        let active = reg.active ? yes : no;
-        message = `${message}\n - installing: ${installing}\n - waiting:    ${waiting}\n - active:     ${active}`;
-        console.log(message);
-    }
     function listenForControllerChangeAndReloadWhenItDoes() {
         navigator.serviceWorker.oncontrollerchange = function (e) {
             debug.log('Controller has changed!');
             if (navigator.serviceWorker.controller) {
-                console.log('Controller is new. Reloading....');
+                debug.log('Controller is new. Reloading....');
                 ui.reload();
             }
             else {
-                console.log('Controller has died :-( Doing nothing.');
+                debug.log('Controller has died :-( Doing nothing.');
             }
         };
     }
@@ -105,7 +98,7 @@ function ServiceWorkerClient(url, console, ui) {
             // and the user rejects an update, then the waiting listener will not fire again until we reload.
             // Subsequent clicks on the 'check for updates' button will not find any, even though one is still waiting
             // to be told to skip.
-            console.log('Blocking redundant attempt to handle update.');
+            debug.log('Blocking redundant attempt to handle update.');
             return;
         }
         let newSw = (reg.installing || reg.waiting);
@@ -113,20 +106,20 @@ function ServiceWorkerClient(url, console, ui) {
         let isFirstTime = (newSw && !activeSw);
         let isUpdate = (newSw && activeSw);
         if (!newSw) {
-            console.error('No update to handle!');
+            debug.error('No update to handle!');
         }
         if (isFirstTime) {
-            console.log('Service worker installing for the first time. Activation should be automatic.');
+            debug.log('Service worker installing for the first time. Activation should be automatic.');
         }
         if (isUpdate) {
             if (navigator.serviceWorker.controller) {
                 ui.confirmUpdateWithUser(function (acceptUpdate) {
                     if (acceptUpdate) {
-                        console.log('++OK: Proceeding with update...');
-                        console.log('Sending SKIP_WAITING command to new service worker so that it activates.')
+                        debug.log('++OK: Proceeding with update...');
+                        debug.log('Sending SKIP_WAITING command to new service worker so that it activates.')
                         newSw.postMessage({message: 'SKIP_WAITING'});
                     } else {
-                        console.log('++CANCEL: update rejected by user.');
+                        debug.log('++CANCEL: update rejected by user.');
                         // The rejected update will be stuck in the waiting state where we will find it the next
                         // time we press the update button, or the next time we reload.
                     }
@@ -138,7 +131,7 @@ function ServiceWorkerClient(url, console, ui) {
                 // So we need to play catch up, and reload so we become controlled by our service worker.
                 // If we don't do this now then we will have to wait until we reload or restart, or for another update,
                 // in order to become controlled by our service worker.
-                console.log('New service worker is activating automatically. Reloading to become controlled by it.');
+                debug.log('New service worker is activating automatically. Reloading to become controlled by it.');
                 ui.updateFoundReloadNeeded();
             }
         }

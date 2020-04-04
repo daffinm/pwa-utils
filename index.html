@@ -6,8 +6,11 @@
     <meta id="meta-viewport" name="viewport"
           content="user-scalable=yes, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
 
+    <script src="js/assert.js"></script>
+    <script src="js/debug-console.js"></script>
+    <script src="js/sw-utils.js"></script>
     <script src="js/sw-client.js"></script>
-    <script src="js/debug.js"></script>
+
     <link rel="manifest" href="manifest.json">
     <style>
         #status-messages {
@@ -56,8 +59,9 @@
 <button id="check-for-updates">Check for updates...</button>
 <div id="time-stamp"></div>
 
-<script>
-    const debug = new Debug(true, 'Application', 'cornflowerblue');
+<script type="module">
+
+    const debug = new DebugConsole(true, 'Application', 'cornflowerblue');
     debug.heading('Application Starting up...');
     // Status messages - so we can see what's going on.
     let $messages = document.getElementById('status-messages');

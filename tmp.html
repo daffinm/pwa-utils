@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script>
+
+    function Test() {
+        this.x = function () {
+            console.log('X');
+        };
+        this.y = 'Hello';
+    }
+
+    test = new Test();
+
+    function isDefined(arg) {
+        return !(typeof arg === 'undefined' || arg === null);
+    }
+    function isObject(arg) {
+        return (typeof arg === 'object');
+    }
+    function isFunction(arg) {
+        return (typeof arg === 'function');
+    }
+    function isNumber(arg) {
+        return (typeof arg === 'number');
+    }
+
+    function testIsFunction(name) {
+        let result = eval(name);
+        console.assert(isFunction(result), `${name} is not a function:`, result);
+    }
+    function testIsDefined(name) {
+        let result = eval(name);
+        console.assert(isDefined(result), `${name} is undefined/null:`, result);
+    }
+
+    // testIsDefined('test');
+    // testIsFunction('test.x');
+    // testIsFunction('test.y');
+    // testIsFunction('test.z');
+
+    let urlString = 'https://www.google.com/search?q=window+location+api&oq=window+location+api&aqs=chrome..69i57.6716j0j1&sourceid=chrome&ie=UTF-8';
+    let url = new URL(urlString);
+    let urlMinusSearch = urlString.split('?')[0];
+    let again = 'http://google.com'.split('?')[0];
+
+
+</script>
+
+</body>
+</html>
