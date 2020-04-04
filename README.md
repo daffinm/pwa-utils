@@ -3,6 +3,8 @@ Project for exploring and documenting how to get the service worker update flow 
 
 Comments and improvements welcome.
 
+CDN link: https://cdn.jsdelivr.net/gh/daffinm/test-service-worker-update-flow/
+
 I am in no way an expert in any of this. Just an old-fashioned java programmer trying to make sense of all this so I can 
 feel confident that my apps will work well and I can stop thinking about it.
 
