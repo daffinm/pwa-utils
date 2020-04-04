@@ -1,9 +1,10 @@
 # Test Service Worker Update Flow
-Project for exploring and documenting how to get the service worker update flow working perfectly.
+Project for exploring and documenting how to get the service worker update flow working perfectly, and for developing
+other reusable bits and pieces for PWAs.
 
 Comments and improvements welcome.
 
-CDN link: https://cdn.jsdelivr.net/gh/daffinm/test-service-worker-update-flow/
+CDN link: https://cdn.jsdelivr.net/gh/daffinm/pwa-utils/
 
 I am in no way an expert in any of this. Just an old-fashioned java programmer trying to make sense of all this so I can 
 feel confident that my apps will work well and I can stop thinking about it.
@@ -40,7 +41,7 @@ The code here attempt so do all of this as simply as possible.
 
 Have I missed anything, or misunderstood, or made it too complicated? 
 
-## Running and playing with the simpleUI
+## Running and playing with the demo app
 
 1. Run project using `npm start` and goto http://localhost:5001 in Chrome.
 1. Open the dev tools console asap and check the console messages to see what's happening.
