@@ -1,13 +1,16 @@
 // Uses assert from assert.js
 
 function ServiceWorkerClient(url, debug, ui) {
+
+    if (serviceWorkerIsUnsupported()) return;
+
     assert.isDefined(url);
     assert.isDefined(debug);
     assert.isDefined(ui);
-    assert.isFunction(ui.noUpdateFound);
     assert.isFunction(ui.updateError);
+    assert.isFunction(ui.updateFoundConfirmWithUser);
     assert.isFunction(ui.updateFoundReloadNeeded);
-    assert.isFunction(ui.confirmUpdateWithUser);
+    assert.isFunction(ui.updateNotFound);
     assert.isFunction(ui.reload);
 
     // Brilliant prolyfil by dfabulich
@@ -27,6 +30,9 @@ function ServiceWorkerClient(url, debug, ui) {
         });
     }
     this.register = function () {
+
+        if (serviceWorkerIsUnsupported()) return;
+
         debug.log('Registering service worker...');
         navigator.serviceWorker.register(url)
             .then(function (reg) {
@@ -41,12 +47,24 @@ function ServiceWorkerClient(url, debug, ui) {
                 debug.error('Error registering service worker: ', err);
             });
     };
+    // Mostly this will be called as a result of a user interaction such as a 'check for updates' button being pressed.
+    // If not then override this default by calling this method with false.
     this.update = function (updateButtonPressed) {
+
+        if (serviceWorkerIsUnsupported()) return;
+
+        // Default
+        if (typeof updateButtonPressed === 'undefined' || updateButtonPressed === null) {
+            updateButtonPressed = true;
+        }
+
+        debug.log(`Checking for updates to service worker (updateButtonPressed=${updateButtonPressed})`);
+
         // Call register as this will trigger an error if the user if offline.
         navigator.serviceWorker.register(url).then(async function (reg) {
             await fetch(url, {method: 'HEAD'}); // trigger error if offline.
             reg.update().then(function (reg) {
-                logRegistration(reg, 'Checking for updates', debug);
+                logRegistration(reg, 'Update check complete. Registration state:');
                 if (updateIsAvailable(reg)) {
                     debug.log('Update found by update checker. Handling it...');
                     handleUpdateTo(reg, updateButtonPressed);
@@ -54,19 +72,28 @@ function ServiceWorkerClient(url, debug, ui) {
                 else {
                     debug.log('No update found.');
                     if (updateButtonPressed) {
-                        ui.noUpdateFound();
+                        ui.updateNotFound();
                     }
                 }
             })
         })
-            .catch(function(err){
-                debug.error('Error getting service worker registration: ', err);
-                ui.updateError(err);
-            });
+        .catch(function(err){
+            debug.error('Error getting service worker registration: ', err);
+            ui.updateError(err);
+        });
     };
     //--------------------------------------------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------------------------------------------
+    function serviceWorkerIsUnsupported() {
+        if (!('serviceWorker' in navigator)) {
+            debug.warn('Service Workers are not supported by this browser.');
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
     function logRegistration(reg, message) {
         message = message ? message : 'Service Worker registration';
         const yes = '✓';
@@ -87,11 +114,11 @@ function ServiceWorkerClient(url, debug, ui) {
         navigator.serviceWorker.oncontrollerchange = function (e) {
             debug.log('Controller has changed!');
             if (navigator.serviceWorker.controller) {
-                debug.log('Controller is new. Reloading....');
+                debug.log('Controller is NEW. Reloading....');
                 ui.reload();
             }
             else {
-                debug.log('Controller has died :-( Doing nothing.');
+                debug.log('Controller is DEAD :-( Doing nothing.');
             }
         };
     }
@@ -122,10 +149,11 @@ function ServiceWorkerClient(url, debug, ui) {
         }
         if (isUpdate) {
             if (navigator.serviceWorker.controller) {
-                ui.confirmUpdateWithUser(function (acceptUpdate) {
+                ui.updateFoundConfirmWithUser(function (acceptUpdate) {
                     if (acceptUpdate) {
                         debug.log('++OK: Proceeding with update...');
-                        debug.log('Sending SKIP_WAITING command to new service worker so that it activates.')
+                        debug.log('Sending SKIP_WAITING command to new service worker so that it activates.');
+                        // TODO ensure your service worker implements a message listener that looks for messages like this.
                         newSw.postMessage({message: 'SKIP_WAITING'});
                     } else {
                         debug.log('++CANCEL: update rejected by user.');
@@ -140,8 +168,13 @@ function ServiceWorkerClient(url, debug, ui) {
                 // So we need to play catch up, and reload so we become controlled by our service worker.
                 // If we don't do this now then we will have to wait until we reload or restart, or for another update,
                 // in order to become controlled by our service worker.
-                debug.log('New service worker is activating automatically. Reloading to become controlled by it.');
-                ui.updateFoundReloadNeeded();
+                // The assumption here is that this app is not running in multiple tabs in the same browser, in different
+                // states in each tab. If you have an advanced use case that needs this then - DIY :)
+                debug.warn('This client is NOT controlled by the service worker.\n - New service worker should activate automatically.\n - Reload is needed NOW.');
+                ui.updateFoundReloadNeeded(function () {
+                    debug.warn('User has acknowledged. Reloading application...');
+                    ui.reload();
+                });
             }
         }
     }
@@ -150,21 +183,10 @@ function ServiceWorkerClient(url, debug, ui) {
 // Demo ui callback object - implements an interface (I wish) that enables us to decouple the service worker
 // client from the app that's using it.
 function SimpleUI(debug) {
-    this.noUpdateFound = function () {
-        alert(`No update found\n\nYou are already on the latest version.`);
-    };
     this.updateError = function (err) {
-        alert(`Error\n\nCannot check for updates.\n\nAre you offline?`);
+        alert(`Error!\n\nCannot check for updates.\n\nAre you offline?`);
     };
-    this.updateFoundReloadNeeded = function () {
-        // Called when an update is found but the client is not controlled by the service worker. This means that
-        // the update will activate automatically. So the client will need to play catch up with the service worker:
-        // to reload so that it becomes controlled by it.
-        // Inform the user with OK dialog and reload when this returns (to give some sense of control).
-        alert('Update found!\n\nApp will reload when you press OK.');
-        this.reload();
-    };
-    this.confirmUpdateWithUser = function (callback) {
+    this.updateFoundConfirmWithUser = function (callback) {
         if (confirm(`Update available!\n\nAn update is available for this app.\n\nUse it now?`)) {
             callback(true);
         }
@@ -172,9 +194,26 @@ function SimpleUI(debug) {
             callback(false);
         }
     };
+    this.updateFoundReloadNeeded = function (callback) {
+        // Called when an update is found but the client is not controlled by the service worker. This means that
+        // the update will activate automatically. So the client will need to play catch up with the service worker:
+        // to reload so that it becomes controlled by it (assuming it is routed through it).
+        //
+        // This method enables you to inform the user that an update/reload is about to happen.
+        // - Give them time to register and respond to this message with with an alert dialog of some kind, then call
+        //   the callback to signal that this has been done.
+        // - The aim here is to give the user some sense of control over something that just has to happen, whether
+        //   they like it or not.
+        // - ui.reload() will then be called automatically by the swc as the next step.
+        alert('Update found!\n\nApp will reload when you press OK.');
+        callback();
+    };
+    this.updateNotFound = function () {
+        alert(`No update found\n\nYou are already on the latest version.`);
+    };
     this.reload = function () {
         debug.warn('Reloading app...');
-        document.body.style = 'color:red;';
+        document.body.style = 'color: red;';
         setTimeout(() => window.location.reload(), 1000);
     };
 }

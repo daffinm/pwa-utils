@@ -11,12 +11,21 @@ function logRegistration(reg, message) {
     message = `${message}\n - installing: ${installing}\n - waiting:    ${waiting}\n - active:     ${active}`;
     debug.log(message);
 }
+function countControlledClients() {
+    self.clients.matchAll().then(function (clientArray) {
+        let controlledClients = clientArray.length;
+        debug.log(`I am currently controlling ${controlledClients} client(s).`);
+    });
+}
 
 importScripts('js/debug-console.js');
 const debug = new DebugConsole(DEBUG_LOGGING, 'Service Worker', 'indianred');
 debug.heading('New Service Worker installing...');
-
 logRegistration(self.registration, 'At startup: registration state', debug);
+const FIRST_TIME = (!self.registration.active);
+if (FIRST_TIME) {
+    debug.log('Installing for the first time. Activating automatically...');
+}
 
 const WORKBOX_VERSION = "5.1.2";
 importScripts(`https://storage.googleapis.com/workbox-cdn/releases/${WORKBOX_VERSION}/workbox-sw.js`);
@@ -27,6 +36,7 @@ workbox.core.setCacheNameDetails({
     precache: 'installtime',
     runtime: 'runtime',
 });
+
 self.addEventListener('message', (event) => {
     debug.log(`Received message from client: ${event.data.message}`);
     if (event.data.message === 'SKIP_WAITING') {
@@ -35,27 +45,14 @@ self.addEventListener('message', (event) => {
     }
 });
 self.addEventListener('install', function (event) {
-    logRegistration(self.registration, 'On install: registration state', debug);
+    logRegistration(self.registration, 'install event handler. Registration state:', debug);
+    countControlledClients();
 });
-const FIRST_TIME = (!self.registration.active);
-if (FIRST_TIME) {
-    debug.log('Installing for the first time. Activating automatically...');
-}
-let controlledClients = 0;
-self.clients.matchAll().then(function (clientArray) {
-    controlledClients = clientArray.length;
-    debug.log(`I am currently controlling ${controlledClients} client(s)`);
-    if (controlledClients === 0) {
-        debug.log('Activating automatically...');
-    } else {
-        debug.log('Not activating automatically.');
-    }
-});
-
 // If there are no controlled clients then a new service worker will activate automatically, even if there
 // is a previous active version. And it will carry on doing this each time until a client becomes controlled.
 self.addEventListener('activate', function(event) {
-    logRegistration(self.registration, 'On activate: registration state', debug);
+    logRegistration(self.registration, 'activate event handler. Registration state:', debug);
+    countControlledClients();
     // Note. Our client page is initially uncontrolled by a service worker because it was not served by a the
     // service worker. So how do we bring it under control in a way that does not take control away from the user?
     // ---
@@ -97,5 +94,6 @@ workbox.routing.registerRoute(
         }
     })
 );
+
 
 
