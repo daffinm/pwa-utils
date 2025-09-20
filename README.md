@@ -2,6 +2,9 @@
 Project for some reusable bits and pieces for PWAs. Experimental.
 * CDN https://cdn.jsdelivr.net/gh/daffinm/pwa-utils@latest/
 
+
+
+
 # Test Service Worker Update Flow
 The main thing I am starting with is exploring and documenting how to get the service worker update flow working perfectly (or well enough). 
 
