@@ -1,22 +1,22 @@
 {
-  "name": "test-service-worker-update-flow",
+  "name": "PWA Utils",
+  "short_name": "PWAUtils",
   "version": "1.0.0",
-  "description": "Project for exploring and documenting how to get the service worker update working perfectly.",
-  "main": "sw.js",
+  "description": "Project for exploring and documenting how to solve common pwa related problems in a reusable manner.",
   "scripts": {
-    "start": "http-server ./www-deploy -c-1 -p 5001"
+    "serve": "http-server ./www-deploy -c-1 -p 5000 -a 0.0.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/daffinm/test-service-worker-update-flow.git"
+    "url": "git+https://github.com/daffinm/pwa-utils.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/daffinm/test-service-worker-update-flow/issues"
+    "url": "https://github.com/daffinm/pwa-utils/issues"
   },
-  "homepage": "https://github.com/daffinm/test-service-worker-update-flow#readme",
+  "homepage": "https://github.com/daffinm/pwa-utils#readme",
   "devDependencies": {
     "http-server": "^0.12.1"
   }
