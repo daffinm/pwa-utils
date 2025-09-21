@@ -1,9 +1,9 @@
 /*----------------------------------------------------------------------------------------------------------------------
-Simulate Safe Area Insets (SAIs) for testing purposes
+    Simulate Safe Area Insets (SAIs) for testing purposes
 ------------------------------------------------------------------------------------------------------------------------
-We simulate SAIs here, overriding the actual variable declarations in the main css file.
-Just import this css file in your html file after importing the main file to enable the simulation.
-*/
+    We simulate SAIs here, overriding the actual variable declarations in the main css file.
+    Just import this css file in your html file after importing the main file to enable the simulation.
+----------------------------------------------------------------------------------------------------------------------*/
 :root {
     /* Just do psotive values for top and bottom because... */
     --safe-area-inset-top: 30px;
