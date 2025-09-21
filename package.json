@@ -5,7 +5,7 @@
   "description": "Project for exploring and documenting how to solve common pwa related problems in a reusable manner.",
   "scripts": {
     "serve-swuf": "http-server ./demos/service-worker-update-flow -c-1 -p 5001 -a 0.0.0.0",
-    "serve-evd": "http-server ./demos/effective-viewport-dimensions -c-1 -p 5001 -a 0.0.0.0"
+    "serve-evd": "http-server demos/safe-area-insets -c-1 -p 5001 -a 0.0.0.0"
   },
   "repository": {
     "type": "git",
