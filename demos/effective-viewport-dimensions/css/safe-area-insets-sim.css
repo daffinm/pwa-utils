@@ -26,7 +26,7 @@ body {
     height: 100vh;
     width: 100vw;
     background-color: black;
-    border-radius: 25px
+    border-radius: 25px;
 
     /* 10px grid to show where the simulated sais are. */
     background-color: #fff;
