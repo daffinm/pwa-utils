@@ -1,0 +1,13 @@
+/*
+In standard CSS, the following at-rules (directives) are valid:
+@import — Imports external style sheets.
+@media — Applies styles based on media queries.
+@supports — Applies styles if a CSS feature is supported.
+@font-face — Defines custom fonts.
+@keyframes — Defines CSS animations.
+@namespace — Declares XML namespaces.
+@page — Used in paged media (like print).
+@counter-style — Defines custom list counter styles.
+@property — Registers custom properties (CSS Houdini).
+*/
+

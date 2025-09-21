@@ -1,23 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="simulate-sais">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>App SAI Experiments</title>
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width viewport-fit=cover">
     <link rel="stylesheet" href="css/safe-area-insets.css">
-
-    <style>
-        /*
-        background-color: #fff;
-        background-image:
-                linear-gradient(to right, #e0e0e0 1px, transparent 1px),
-                linear-gradient(to bottom, #e0e0e0 1px, transparent 1px),
-                linear-gradient(to right, #bdbdbd 1px, transparent 1px),
-                linear-gradient(to bottom, #bdbdbd 1px, transparent 1px);
-        background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
-        background-position: 0 0, 0 0, 0 0, 0 0;
-        */
-    </style>
+    <!-- Import the sim css immediately after to simulate safe area insets for testing purposes (i.e. in browser dev tools)   -->
+    <link rel="stylesheet" href="css/safe-area-insets-sim.css">
 
     <!--  App styles. Rely on the safe area insets variables defined in the first style element.  -->
     <style>
