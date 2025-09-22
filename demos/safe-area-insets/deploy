@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Deploy to Firebase?
+# ----------------------------------------------------------------------------------------------------------------------
+if [ "$1" == "deploy" ]; then
+  printf "\n::::: Deploying app to firebase:\n"
+  if [ "$2" == "debug" ]; then
+    firebase --debug --only hosting deploy
+  else
+    firebase deploy --only hosting deploy
+  fi
+fi
+printf "\n::::: BUILD DONE!\n"

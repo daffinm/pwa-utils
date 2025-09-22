@@ -2,16 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Safe Area Insets Sim Demo</title>
-    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width viewport-fit=cover">
+    <title>Safe Area Insets Demo</title>
+    <!-- Basic PWA settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover">
+    <meta name="theme-color" content="#ff7043">
+    <!-- Apple Specific PWA Settings   -->
+    <!-- Enable standalone mode on iOS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Set the status bar style -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- App title on home screen -->
+    <meta name="apple-mobile-web-app-title" content="Safe Area Insets Demo">
+    <!-- iOS home screen icon -->
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+
     <link rel="stylesheet" href="css/safe-area-insets.css">
     <!-- Import the sim css immediately after to simulate safe area insets for testing purposes (i.e. in browser dev tools)   -->
-    <link rel="stylesheet" href="css/safe-area-insets-sim.css">
+<!--    <link rel="stylesheet" href="css/safe-area-insets-sim.css">-->
 
     <!--  App styles. Rely on the safe area insets variables defined in the first style element.  -->
     <style>
         * {
             box-sizing: border-box;
+        }
+        body {
         }
         body {
             /* Sizes of the app components. Define at this level so that the simulated sais can be used.   */
@@ -25,6 +40,9 @@
             --app-navbar-background-color: #ff7043;
 
             background-color: var(--app-body-background-color) !important;
+            padding-bottom: var(--safe-area-inset-bottom);
+
+            font-size: 1.5em;
         }
         #app {
             position: fixed;
@@ -102,7 +120,7 @@
 <body>
     <div id="app">
         <div id="header">
-            <h2>The App</h2>
+            <h2>🦗 Demo App 🦗</h2>
         </div>
         <div id="content">
             <h2>This is a placeholder for the App content.</h2>
@@ -141,5 +159,11 @@
             <button>Share</button>
         </div>
     </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </body>
 </html>
