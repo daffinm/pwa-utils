@@ -4,32 +4,40 @@
     We simulate SAIs here, overriding the actual variable declarations in the main css file.
     Just import this css file in your html file after importing the main file to enable the simulation.
 ----------------------------------------------------------------------------------------------------------------------*/
-:root {
-    /* Just do psotive values for top and bottom because... */
-    --safe-area-inset-top: 30px;
-    --safe-area-inset-bottom: 35px;
-    /* ...most devices never have safe area insets left and right. */
-    --safe-area-inset-left: 0px;
-    --safe-area-inset-right: 0px;
+@media (orientation: portrait) {
+    /* Notch at the top, home control at the bottom. */
+    :root {
+        --safe-area-inset-top: 30px;
+        --safe-area-inset-bottom: 35px;
+        --safe-area-inset-left: 0px;
+        --safe-area-inset-right: 0px;
+    }
+}
+@media (orientation: landscape) {
+    /* Notch to the left, home control at the bottom. */
+    :root {
+        --safe-area-inset-top: 0px;
+        --safe-area-inset-bottom: 35px;
+        --safe-area-inset-left: 34px;
+        --safe-area-inset-right: 0px;
+    }
 }
 html  {
     margin: 0;
     padding: 0;
     height: 100vh;
     width: 100vw;
-    background-color: white;
-
+    background-color: black;
 }
 body {
     margin: 0;
     padding: 0;
     height: 100vh;
     width: 100vw;
-    background-color: black;
     border-radius: 25px;
 
-    /* 10px grid to show where the simulated sais are. */
     background-color: #fff;
+    /* 10px grid to show where the simulated sais are. */
     background-image:
             linear-gradient(to right, #e0e0e0 1px, transparent 1px),
             linear-gradient(to bottom, #e0e0e0 1px, transparent 1px),
@@ -38,30 +46,45 @@ body {
     background-size: 10px 10px, 10px 10px, 100px 100px, 100px 100px;
     background-position: 0 0, 0 0, 0 0, 0 0;
 }
+
 body::before,
 body::after {
     content: "";
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 2000;
     pointer-events: none;
 }
 body::before {
-    /* Simulate a top notch */
-    top: 0;
+    /* Simulate a notch */
     width: 160px;
     height: 30px;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
     background: #222;
+    /* Default portrait positioning   */
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 body::after {
-    /* Simulate a bottom home indicator */
-    bottom: 20px;
+    /* Simulate a bottom home indicator, which never changes (always at the bottom of the screen). */
     width: 120px;
     height: 6px;
     border-radius: 3px;
     background: #bbb;
     opacity: 0.7;
+    /* Positioning */
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+@media (orientation: landscape) {
+    body::before {
+        /* Notch now on the left. */
+        top: 50%;
+        left: 0;
+        transform-origin: top left;
+        transform: rotate(-90deg) translateX(-50%);
+    }
 }

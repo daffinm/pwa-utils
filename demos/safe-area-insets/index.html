@@ -34,7 +34,7 @@
             right: var(--safe-area-inset-right);
             width: auto;
 
-            background-color: #fff3e0;
+            background-color: transparent;
         }
         #header {
             position: absolute;
@@ -51,6 +51,11 @@
             justify-content: center;
             border-bottom: 2px solid black;
             z-index: 1000;
+        }
+        @media (orientation: landscape) {
+            #header {
+                border-top-right-radius: 25px;
+            }
         }
         #content {
             position: absolute;
