@@ -1,0 +1,24 @@
+{
+  "hosting": [
+    {
+      "target": "safe-area-insets-demo",
+      "public": "www-deploy/said",
+      "rewrites": [
+        {
+          "source": "/said/**",
+          "destination": "/said/index.html"
+        }
+      ]
+    },
+    {
+      "target": "service-worker-update-flow",
+      "public": "www-deploy/swuf",
+      "rewrites": [
+        {
+          "source": "/swuf/**",
+          "destination": "/swuf/index.html"
+        }
+      ]
+    }
+  ]
+}

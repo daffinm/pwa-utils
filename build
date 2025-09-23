@@ -1,0 +1,181 @@
+#!/bin/bash
+
+COMMAND_DEPLOY='deploy';
+
+function usageAndExit() {
+  printf "Usage: $0 [demo_source_dir] [${COMMAND_DEPLOY}]\n"
+  exit 1
+}
+if [[ "$1" == "-h" ]]; then
+  usageAndExit
+fi
+if [[ $# -gt 2 ]]; then
+  usageAndExit
+fi
+
+demoSourceDir=${1:-}
+if [[ -z "${demoSourceDir}" ]]; then
+  usageAndExit
+fi
+
+demoDirName=$(basename "${demoSourceDir}")
+
+SOURCE_DIR="${demoSourceDir}"
+DEPLOY_DIR="./www-deploy/${demoDirName}"
+
+if [[ ! -d ${SOURCE_DIR} ]]; then
+  echo "Error: demo source dir not found: ${SOURCE_DIR}"
+  usageAndExit
+fi
+
+command=${2:-}
+if [[ "$command" != '' && "$command" != $COMMAND_DEPLOY ]]; then
+  usageAndExit
+fi
+
+# ----------------------------------------------------------------------------------------------------------------------
+function logTitle() {
+  printf "\n:::::::::::::::::::::::::::::::::::::::::::::::::::::"
+  printf "\n:::: %s" "$1"
+  printf "\n:::::::::::::::::::::::::::::::::::::::::::::::::::::\n"
+}
+function logHeading() {
+  printf "\n::::: %s:\n" "$1"
+}
+function logSubHeading() {
+  printf "\n:: %s:\n" "$1"
+}
+logTitle "Running build for demo project: [${demoDirName}]"
+printf "SOURCE_DIR: ${SOURCE_DIR}\n"
+printf "DEPLOY_DIR: ${DEPLOY_DIR}\n"
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Sync the source dir into the deploy dir (just the diffs) and remove any orphan files...
+# ----------------------------------------------------------------------------------------------------------------------
+logHeading "Syncing ${SOURCE_DIR} to ${DEPLOY_DIR}"
+rsync -v -a ${SOURCE_DIR}/ ${DEPLOY_DIR}/ --delete
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Delete any un-minified files in the deploy dir
+# ----------------------------------------------------------------------------------------------------------------------
+#logSubHeading "Deleting un-minified css"
+#find $DEPLOY_DIR -name '*.css' -not -name '*.min.css' -delete -print
+#logSubHeading "Deleting un-minified vendor js"
+#find ${DEPLOY_DIR_VENDOR_JS} -name '*.js' -not -name '*.min.js' -delete -print
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Copy firebase config for chosen envTarget (prod or qa)
+# ----------------------------------------------------------------------------------------------------------------------
+#logHeading "Copying Firebase config for [${envTarget}] environment"
+#cp --verbose ${FIREBASE_CONFIG_SOURCE_FILE} ${FIREBASE_CONFIG_DEST_FILE}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Install workbox CLI if not already installed.
+# ----------------------------------------------------------------------------------------------------------------------
+#logHeading "Copying workbox libraries to deploy directory"
+#npx workbox copyLibraries ${DEPLOY_DIR_VENDOR_JS}
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Set build date and build sequence number in source directory files
+# ----------------------------------------------------------------------------------------------------------------------
+function getVariableFromBashScriptFile() {
+    local file=$1
+    local varName=$2
+    varValue=$(grep "${varName}=" "${file}" | sed -r 's/^.*="(.*?)".*/\1/')
+    echo "$varValue"
+}
+function setVariableInBashScriptFile() {
+    local file=$1
+    local varName=$2
+    local varValue=$3
+    sed -i -r "s|(${varName}=\").*(\"$)|\1${varValue}\2|g" "${file}"
+}
+function setConstInJavaScriptFile() {
+    local file=$1
+    local constName=$2
+    local constValue=$3
+    sed -i -r "s|__${constName}|${constValue}|g" "${file}"
+}
+function updateBuildVersion() {
+    local file=$1
+
+    local varNameBuildDate="BUILD_DATE"
+    local varNameBuildNumber="BUILD_NUMBER"
+
+    local buildDateOld=$(getVariableFromBashScriptFile "${file}" "${varNameBuildDate}")
+    local buildDateToday
+    printf -v buildDateToday '%(%Y%m%d)T'
+
+    local buildNumberOld=$(getVariableFromBashScriptFile "${file}" "${varNameBuildNumber}")
+    local buildNumberNew
+    if [[ "$buildDateToday" != "$buildDateOld" ]]; then
+        buildNumberNew=1
+        echo "New day so resetting ${varNameBuildNumber} from ${buildNumberOld} to ${buildNumberNew}"
+      else
+        buildNumberNew=$((buildNumberOld + 1))
+        echo "Same day so incrementing ${varNameBuildNumber} from ${buildNumberOld} to ${buildNumberNew}"
+    fi
+
+    setVariableInBashScriptFile "${file}" "${varNameBuildDate}" "${buildDateToday}"
+    setVariableInBashScriptFile "${file}" "${varNameBuildNumber}" "${buildNumberNew}"
+}
+function updateBuildInfoConstantsInFile() {
+    local file=$1
+    logSubHeading "Updating Build Info in: ${file}"
+    setConstInJavaScriptFile "${file}" "BUILD_RELEASE" "${BUILD_RELEASE}"
+    setConstInJavaScriptFile "${file}" "BUILD_DATE" "${BUILD_DATE}"
+    setConstInJavaScriptFile "${file}" "BUILD_NUMBER" "${BUILD_NUMBER}"
+    setConstInJavaScriptFile "${file}" "APP_VERSION" "${APP_VERSION}"
+}
+
+logHeading "Updating Build Info Constants in Source Files"
+# Build info updated in these files to ensure update is triggered after each deployment.
+BUILD_INFO_FILE_APP="${DEPLOY_DIR}/index.js"
+BUILD_INFO_FILE_SW="${DEPLOY_DIR}/sw.js"
+
+updateBuildVersion "./build.version"
+source ./build.version
+
+echo "BUILD_RELEASE=${BUILD_RELEASE}"
+echo "BUILD_DATE=${BUILD_DATE}"
+echo "BUILD_NUMBER=${BUILD_NUMBER}"
+echo "APP_VERSION=${APP_VERSION}"
+
+function checkBuildInfoFileExists() {
+    local file=$1
+    if [[ ! -f "${file}" ]]; then
+        echo "Error: Build Info file not found: ${file}"
+        exit 1
+    fi
+}
+
+checkBuildInfoFileExists "${BUILD_INFO_FILE_APP}"
+checkBuildInfoFileExists "${BUILD_INFO_FILE_SW}"
+
+updateBuildInfoConstantsInFile ${BUILD_INFO_FILE_APP}
+updateBuildInfoConstantsInFile ${BUILD_INFO_FILE_SW}
+
+exit 0
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Generate the list of pre-cached files with fingerprints and inject into the service worker file.
+# ----------------------------------------------------------------------------------------------------------------------
+# See https://developers.google.com/web/tools/workbox/guides/precache-files/cli
+#workbox wizard --injectManifest
+# Overwrites sw.js file in deploy directory.
+logHeading "Injecting precache manifest using workbox"
+DEMO_DIR=${DEPLOY_DIR}
+workbox injectManifest ./workbox-config-precache.js
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Deploy to Firebase?
+# See https://firebase.google.com/docs/cli/targets
+# ----------------------------------------------------------------------------------------------------------------------
+if [ "$command" == $COMMAND_DEPLOY ]; then
+  logHeading "Deploying app to firebase server"
+  firebaseCommand="firebase deploy --only hosting
+  echo "Running command: ${firebaseCommand}"
+  eval firebaseCommand
+fi
+
+logHeading "Build Done: APP_VERSION=${APP_VERSION}"

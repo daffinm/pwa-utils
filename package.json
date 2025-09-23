@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "description": "Project for exploring and documenting how to solve common pwa related problems in a reusable manner.",
   "scripts": {
-    "serve-swuf": "http-server ./demos/service-worker-update-flow -c-1 -p 5001 -a 0.0.0.0",
-    "serve-said": "http-server demos/safe-area-insets/www -c-1 -p 5001 -a 0.0.0.0"
+    "serve-swuf": "http-server www/service-worker-update-flow -c-1 -p 5001 -a 0.0.0.0",
+    "serve-said": "http-server www/safe-area-insets-demo/www -c-1 -p 5001 -a 0.0.0.0"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/daffinm/pwa-utils#readme",
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "workbox-cli": "^7.3.0"
   }
 }
