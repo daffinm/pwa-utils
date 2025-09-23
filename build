@@ -94,7 +94,7 @@ function setConstInJavaScriptFile() {
     local file=$1
     local constName=$2
     local constValue=$3
-    sed -i -r "s|__${constName}|${constValue}|g" "${file}"
+    sed -i -r "s|__${constName}|${constValue}|" "${file}"
 }
 function updateBuildVersion() {
     local file=$1
@@ -122,6 +122,11 @@ function updateBuildVersion() {
 function updateBuildInfoConstantsInFile() {
     local file=$1
     logSubHeading "Updating Build Info in: ${file}"
+    if [[ ! -f "${file}" ]]; then
+        echo "Error: Build Info file not found: ${file}"
+        exit 1
+    fi
+
     setConstInJavaScriptFile "${file}" "BUILD_RELEASE" "${BUILD_RELEASE}"
     setConstInJavaScriptFile "${file}" "BUILD_DATE" "${BUILD_DATE}"
     setConstInJavaScriptFile "${file}" "BUILD_NUMBER" "${BUILD_NUMBER}"
@@ -141,21 +146,8 @@ echo "BUILD_DATE=${BUILD_DATE}"
 echo "BUILD_NUMBER=${BUILD_NUMBER}"
 echo "APP_VERSION=${APP_VERSION}"
 
-function checkBuildInfoFileExists() {
-    local file=$1
-    if [[ ! -f "${file}" ]]; then
-        echo "Error: Build Info file not found: ${file}"
-        exit 1
-    fi
-}
-
-checkBuildInfoFileExists "${BUILD_INFO_FILE_APP}"
-checkBuildInfoFileExists "${BUILD_INFO_FILE_SW}"
-
 updateBuildInfoConstantsInFile ${BUILD_INFO_FILE_APP}
 updateBuildInfoConstantsInFile ${BUILD_INFO_FILE_SW}
-
-exit 0
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Generate the list of pre-cached files with fingerprints and inject into the service worker file.
@@ -163,9 +155,9 @@ exit 0
 # See https://developers.google.com/web/tools/workbox/guides/precache-files/cli
 #workbox wizard --injectManifest
 # Overwrites sw.js file in deploy directory.
-logHeading "Injecting precache manifest using workbox"
-DEMO_DIR=${DEPLOY_DIR}
-workbox injectManifest ./workbox-config-precache.js
+#logHeading "Injecting precache manifest using workbox"
+#DEMO_DIR=${DEPLOY_DIR}
+#workbox injectManifest ./workbox-config-precache.js
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Deploy to Firebase?
@@ -173,9 +165,9 @@ workbox injectManifest ./workbox-config-precache.js
 # ----------------------------------------------------------------------------------------------------------------------
 if [ "$command" == $COMMAND_DEPLOY ]; then
   logHeading "Deploying app to firebase server"
-  firebaseCommand="firebase deploy --only hosting
+  firebaseCommand="firebase deploy --only hosting"
   echo "Running command: ${firebaseCommand}"
-  eval firebaseCommand
+  eval $firebaseCommand
 fi
 
 logHeading "Build Done: APP_VERSION=${APP_VERSION}"
