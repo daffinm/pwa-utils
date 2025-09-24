@@ -33,6 +33,9 @@ self.addEventListener('message', (event) => {
         debug.log(`Executing skipWaiting()`);
         self.skipWaiting();
     }
+    if (event.data.type === 'GET_VERSION') {
+        event.ports[0].postMessage(APP_VERSION);
+    }
 });
 
 

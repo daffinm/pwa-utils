@@ -232,6 +232,11 @@
     const wb = registerServiceWorker();
 
     if (wb) {
+        // Example of how to communicate with the service worker.
+        // Can only do this after registration.
+        const swVersion = await wb.messageSW({type: 'GET_VERSION'});
+        debug.log('Service Worker version:', swVersion);
+
         const underControl = navigator.serviceWorker.controller ? true : false;
         const className = (underControl ? 'controller-present' : 'controller-absent');
         const message = (underControl ? 'This page IS controlled by a Service Worker' : 'This page is NOT controlled by a Service Worker');
