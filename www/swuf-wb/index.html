@@ -82,7 +82,10 @@
 <!-- This script tag uses JavaScript modules, so the proper `type` attribute value is required -->
 <script type="module">
     // This code sample uses features introduced in Workbox v6.
-    import {Workbox} from 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-window.prod.mjs';
+    // import {Workbox} from 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-window.prod.mjs';
+    import {Workbox} from 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-window.dev.mjs';
+
+    const debug = new DebugConsole(`App v${APP_VERSION}`, 'cornflowerblue', 'white');
 
     function registerServiceWorker() {
         if (! 'serviceWorker' in navigator) {
@@ -90,34 +93,24 @@
             return null;
         }
 
+        debug.log("Configuring Workbox Window");
 
         const wb = new Workbox('/sw.js');
 
-        // Assuming the user accepted the update, set up a listener that will reload the page as soon as the
-        // previously waiting service worker has taken control.
-        wb.addEventListener('controlling', () => {
-            // At this point, reloading will ensure that the current tab is loaded under the control of the new
-            // service worker. Depending on your web app, you may want to auto-save or persist transient state
-            // before triggering the reload.
-            window.location.reload();
-        });
-
-
-        const promptForUpdate = async () => {
-            return confirm("A new version of this app is available.\n\nDo you want to update now?");
-        }
-
-
-        const showSkipWaitingPrompt = async (event) => {
-            // // Assuming the user accepted the update, set up a listener that will reload the page as soon as the
-            // // previously waiting service worker has taken control.
-            // wb.addEventListener('controlling', () => {
-            //     // At this point, reloading will ensure that the current tab is loaded under the control of the new
-            //     // service worker. Depending on your web app, you may want to auto-save or persist transient state
-            //     // before triggering the reload.
-            //     window.location.reload();
-            // });
-
+        // Add an event listener to detect when the registered service worker has installed but is waiting to activate.
+        // A service worker has installed but it's stuck in the waiting phase.
+        // If the updated version of your service worker does not call skipWaiting() while it's being installed, it
+        // will not activate until all pages controlled by the currently active service worker have unloaded. You may
+        // want to inform the user that an update is available and will be applied the next time they visit.
+        // Warning! it's common for developers to prompt users reload to get the update, but in many cases refreshing
+        // the page will NOT activate the installed worker. If the user refreshes the page and the service worker is
+        // still waiting, the waiting event will fire again and the event.wasWaitingBeforeRegister property will be true.
+        // Note, we plan to improve this experience in a future release. Follow issue #1848 for updates.
+        // Another option is to prompt the user and ask whether they want to get the update or continue waiting.
+        // If they choose to get the update, you can use postMessage() to tell the service worker to run skipWaiting().
+        // See the advanced recipe offer a page reload for users for an example of that.
+        wb.addEventListener('waiting', (event) => {
+            debug.log('Service worker event: waiting', event);
             // When `event.wasWaitingBeforeRegister` is true, a previously updated service worker is still waiting.
             // You may want to customize the UI prompt accordingly.
 
@@ -125,54 +118,113 @@
             // update. Implementing this is app-specific; some examples are:
             // https://open-ui.org/components/alert.research or
             // https://open-ui.org/components/toast.research
-            const updateAccepted = await promptForUpdate();
-
-            if (updateAccepted) {
+            if (confirm("A new version of this app is available.\n\nDo you want to update now?")) {
+                debug.log('User accepted the update');
                 wb.messageSkipWaiting();
             }
-        };
-
-        // Add an event listener to detect when the registered service worker has installed but is waiting to activate.
-        wb.addEventListener('waiting', (event) => {
-            showSkipWaitingPrompt(event);
+            else {
+                debug.log('User rejected the update');
+            }
         });
 
+        // The service worker has started controlling the page.
+        // Assuming the user accepted the update, set up a listener that will reload the page as soon as the
+        // previously waiting service worker has taken control.
+        // When an updated service worker starts controlling the page, it means the version of your service worker
+        // currently controlling is different from the version that was in control when the page was loaded. In some
+        // cases that may be fine, but it could also mean some assets referenced by the current page are no longer
+        // in the cache (and possibly also not on server). You may want to consider informing the user that some parts
+        // of the page may not work correctly.
+        // Note: the controlling event will not fire if you don't call skipWaiting() in your service worker.
+        wb.addEventListener('controlling', (event) => {
+            debug.log('Service worker event: controlling', event);
+            // At this point, reloading will ensure that the current tab is loaded under the control of the new
+            // service worker. Depending on your web app, you may want to auto-save or persist transient state
+            // before triggering the reload.
+            // Give me time to read the logs...
+            if (confirm("Reload the page now?")) {
+                window.location.reload();
+            }
+        });
+
+        // 1. Either: A new service worker has installed (for the first time)
+        // 2. Or: A new service worker has installed (updating a previous one)
+        //
+        // 1. The very first time a service worker installs, it's common to precache all the assets needed for the site to
+        // work offline. You might consider informing the user that their site can now function offline.
+        // Also, since the very first time a service worker installs it won't have intercepted fetch events for that
+        // page load, you may also consider caching assets that have already been loaded (though this is not needed if
+        // those assets are already being precached).
+        // The send the service worker a list of URLs to cache example above shows how to do this.
+        //
+        // 2. If this is not the very first service worker install (event.isUpdate === true), it means a newer version of
+        // the service worker has been found and installed (that is, a different version from the one currently
+        // controlling the page). This typically means a newer version of the site has been deployed to your server,
+        // and new assets may have just finished precaching.
+        // Note: some developers use the installed event to inform users that a new version of their site is available.
+        // However, depending on whether you call skipWaiting() in the installing service worker, that installed service
+        // worker may or may not become active right away. If you do call skipWaiting() then it's best to inform users
+        // of the update once the new service worker has activated, and if you don't call skipWaiting it's better to
+        // inform them of the pending update in the waiting event (see below for more details).
         wb.addEventListener('installed', event => {
-            debug.log('Service worker installed: ', event);
-            if (!event.isUpdate) {
-                debug.log('Service worker installed for the first time!');
+            debug.log('Service worker event: installed', event);
+            if (event.isUpdate) {
+                debug.log(' - new version installed!');
             }
             else {
-                debug.log('Service worker update available.');
+                debug.log(' - installed for the first time!');
+                // If your service worker is configured to precache assets, those
+                // assets should all be available now.
             }
         });
 
+
+        // The service worker has started controlling the page.
+        // Once a new service worker is installed and starts controlling the page, all subsequent fetch events will go
+        // through that service worker. If your service worker adds any special logic to handle particular fetch event,
+        // this is the point when you know that logic will run.
+        // Note that the very first time you install a service worker, it will not start controlling the current page
+        // unless that service worker calls clients.claim() in its activate event. The default behavior is to wait
+        // until the next page load to start controlling.
+        // From the workbox-window perspective, this means the controlling event is only dispatched in cases where the
+        // service worker calls clients.claim(). This event is not dispatched if the page was already controlled prior
+        // to registration.
         wb.addEventListener('controlling', event => {
-            debug.log('Service worker controlling: ', event);
+            debug.log('Service worker event: controlling', event);
         });
 
+
+        // The service worker has finished activating.
+        // As mentioned above, the very first time a service worker finishes activating it may (or may not) have
+        // started controlling the page. For this reason, you should not listen for the activate event as a way of
+        // knowing when the service worker is in control of the page. However, if you're running logic in the active
+        // event (in the service worker) and you need to know when that logic is complete, the activated event will
+        // let you know that.
+        // When an updated service worker has finished activating, it means any logic you were running in the service
+        // worker's activate has completed. If there's anything you need to defer until that logic has finished, this
+        // is the time to run it.
         wb.addEventListener('activated', event => {
-            debug.log('Service worker activated: ', event);
+            debug.log('Service worker event: activated', event);
             // `event.isUpdate` will be true if another version of the service
             // worker was controlling the page when this version was registered.
             if (!event.isUpdate) {
-                debug.log('Service worker activated for the first time!');
+                debug.log(' - activated for the first time!');
                 // If your service worker is configured to precache assets, those
                 // assets should all be available now.
             }
             else {
-                debug.log('Service worker updated!');
+                debug.log(' - new version activated!');
             }
         });
 
+
+        debug.log("Registering Service Worker with Workbox");
 
         wb.register();
 
         return wb;
     }
 
-    const debug = new DebugConsole(`App v${APP_VERSION}`, 'cornflowerblue', 'white');
-    debug.log('Starting up...');
 
     // Status messages - so we can see what's going on.
     const $messages = document.getElementById('status-messages');
@@ -190,7 +242,7 @@
         const updateButton = document.getElementById('check-for-updates');
         updateButton.addEventListener('click', async function () {
             wb.update().then(reg => {
-                debug.log('workbox update() completed', reg);
+                debug.log('workbox.update() - waiting event will fire if an update is found');
                 // this._logRegistrationState(reg, 'Update check complete. Registration state:');
             });
         });
