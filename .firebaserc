@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "daffinm-test"
+  },
+  "targets": {
+    "daffinm-test": {
+      "hosting": {
+        "said": [
+          "daffinm-said"
+        ],
+        "swuf": [
+          "daffinm-swuf"
+        ]
+      }
+    }
   }
 }

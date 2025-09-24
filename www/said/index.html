@@ -29,7 +29,7 @@
 
     <link rel="stylesheet" href="css/safe-area-insets.css">
     <!-- Import the sim css immediately after to simulate safe area insets for testing purposes (i.e. in browser dev tools)   -->
-<!--    <link rel="stylesheet" href="css/safe-area-insets-demo-sim.css">-->
+<!--    <link rel="stylesheet" href="css/said-sim.css">-->
 
     <!--  App styles. Rely on the safe area insets variables defined in the first style element.  -->
     <style>
@@ -168,10 +168,10 @@
             <button>Share</button>
         </div>
     </div>
-
+    <script type="module" src="index.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
+            navigator.serviceWorker.register('sw.js');
         }
     </script>
 </body>

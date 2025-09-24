@@ -1,7 +1,7 @@
 {
   "hosting": [
     {
-      "target": "safe-area-insets-demo",
+      "target": "said",
       "public": "www-deploy/said",
       "rewrites": [
         {
@@ -11,7 +11,7 @@
       ]
     },
     {
-      "target": "service-worker-update-flow",
+      "target": "swuf",
       "public": "www-deploy/swuf",
       "rewrites": [
         {

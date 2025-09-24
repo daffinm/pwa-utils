@@ -3,7 +3,7 @@
 COMMAND_DEPLOY='deploy';
 
 function usageAndExit() {
-  printf "Usage: $0 [demo_source_dir] [${COMMAND_DEPLOY}]\n"
+  printf "Usage: $0 [demo_dir_name] [${COMMAND_DEPLOY}]\n"
   exit 1
 }
 if [[ "$1" == "-h" ]]; then
@@ -13,14 +13,12 @@ if [[ $# -gt 2 ]]; then
   usageAndExit
 fi
 
-demoSourceDir=${1:-}
-if [[ -z "${demoSourceDir}" ]]; then
+demoDirName=${1:-}
+if [[ -z "${demoDirName}" ]]; then
   usageAndExit
 fi
 
-demoDirName=$(basename "${demoSourceDir}")
-
-SOURCE_DIR="${demoSourceDir}"
+SOURCE_DIR="./www/${demoDirName}"
 DEPLOY_DIR="./www-deploy/${demoDirName}"
 
 if [[ ! -d ${SOURCE_DIR} ]]; then
@@ -165,9 +163,9 @@ updateBuildInfoConstantsInFile ${BUILD_INFO_FILE_SW}
 # ----------------------------------------------------------------------------------------------------------------------
 if [ "$command" == $COMMAND_DEPLOY ]; then
   logHeading "Deploying app to firebase server"
-  firebaseCommand="firebase deploy --only hosting"
+  firebaseCommand="firebase deploy --only hosting:${demoDirName}"
   echo "Running command: ${firebaseCommand}"
   eval $firebaseCommand
 fi
 
-logHeading "Build Done: APP_VERSION=${APP_VERSION}"
+logHeading "Build Done: ${demoDirName} APP_VERSION=${APP_VERSION}"

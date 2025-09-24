@@ -1,0 +1,2 @@
+# Safe Area Insets Demo (SAID)
+This is a simple demo project to showcase the use of Safe Area Insets in web development. Safe Area Insets are used to ensure that content is not obscured by device notches, rounded corners, or other screen features.
