@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>sw test</title>
+    <title>Service Worker Update Flow Demo</title>
     <meta id="meta-viewport" name="viewport"
           content="user-scalable=yes, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover">
 
@@ -43,10 +43,21 @@
             border-radius: 10px;
             margin-top: 1rem;
         }
+        button {
+            font-size: larger;
+            padding: 10px;
+            background-color: lightcoral;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
-<h1>Service Worker Test</h1>
+
+<h2>SWUF (Workbox Version)</h2>
 <p><b>Version: </b><span id="version"></span></p>
 <div id="status-messages"></div>
 <ol>
@@ -64,37 +75,130 @@
 <button id="check-for-updates">Check for updates...</button>
 <div id="time-stamp"></div>
 
-<script type="module" src="./index.js"></script>
+<script src="./js/debug-console.js"></script>
+<script src="./index.js"></script>
 
+<!-- https://developer.chrome.com/docs/workbox/handling-service-worker-updates -->
+<!-- This script tag uses JavaScript modules, so the proper `type` attribute value is required -->
 <script type="module">
-    import DebugConsole from './js/debug-console.js';
-    import WorkboxServiceWorkerClient from './js/sw-client-wb';
-    import SimpleUI from './js/sw-client-wb';
+    // This code sample uses features introduced in Workbox v6.
+    import {Workbox} from 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-window.prod.mjs';
 
-    const debug = new DebugConsole('Application', 'cornflowerblue', 'white');
-    debug.heading('Starting up...');
+    function registerServiceWorker() {
+        if (! 'serviceWorker' in navigator) {
+            debug.error('Service workers are not supported in this browser.');
+            return null;
+        }
+
+
+        const wb = new Workbox('/sw.js');
+
+        // Assuming the user accepted the update, set up a listener that will reload the page as soon as the
+        // previously waiting service worker has taken control.
+        wb.addEventListener('controlling', () => {
+            // At this point, reloading will ensure that the current tab is loaded under the control of the new
+            // service worker. Depending on your web app, you may want to auto-save or persist transient state
+            // before triggering the reload.
+            window.location.reload();
+        });
+
+
+        const promptForUpdate = async () => {
+            return confirm("A new version of this app is available.\n\nDo you want to update now?");
+        }
+
+
+        const showSkipWaitingPrompt = async (event) => {
+            // // Assuming the user accepted the update, set up a listener that will reload the page as soon as the
+            // // previously waiting service worker has taken control.
+            // wb.addEventListener('controlling', () => {
+            //     // At this point, reloading will ensure that the current tab is loaded under the control of the new
+            //     // service worker. Depending on your web app, you may want to auto-save or persist transient state
+            //     // before triggering the reload.
+            //     window.location.reload();
+            // });
+
+            // When `event.wasWaitingBeforeRegister` is true, a previously updated service worker is still waiting.
+            // You may want to customize the UI prompt accordingly.
+
+            // This code assumes your app has a promptForUpdate() method, which returns true if the user wants to
+            // update. Implementing this is app-specific; some examples are:
+            // https://open-ui.org/components/alert.research or
+            // https://open-ui.org/components/toast.research
+            const updateAccepted = await promptForUpdate();
+
+            if (updateAccepted) {
+                wb.messageSkipWaiting();
+            }
+        };
+
+        // Add an event listener to detect when the registered service worker has installed but is waiting to activate.
+        wb.addEventListener('waiting', (event) => {
+            showSkipWaitingPrompt(event);
+        });
+
+        wb.addEventListener('installed', event => {
+            debug.log('Service worker installed: ', event);
+            if (!event.isUpdate) {
+                debug.log('Service worker installed for the first time!');
+            }
+            else {
+                debug.log('Service worker update available.');
+            }
+        });
+
+        wb.addEventListener('controlling', event => {
+            debug.log('Service worker controlling: ', event);
+        });
+
+        wb.addEventListener('activated', event => {
+            debug.log('Service worker activated: ', event);
+            // `event.isUpdate` will be true if another version of the service
+            // worker was controlling the page when this version was registered.
+            if (!event.isUpdate) {
+                debug.log('Service worker activated for the first time!');
+                // If your service worker is configured to precache assets, those
+                // assets should all be available now.
+            }
+            else {
+                debug.log('Service worker updated!');
+            }
+        });
+
+
+        wb.register();
+
+        return wb;
+    }
+
+    const debug = new DebugConsole(`App v${APP_VERSION}`, 'cornflowerblue', 'white');
+    debug.log('Starting up...');
+
     // Status messages - so we can see what's going on.
     const $messages = document.getElementById('status-messages');
 
+    const wb = registerServiceWorker();
 
-    const swc = new WorkboxServiceWorkerClient('sw.js', new SimpleUI(debug));
+    if (wb) {
+        const underControl = navigator.serviceWorker.controller ? true : false;
+        const className = (underControl ? 'controller-present' : 'controller-absent');
+        const message = (underControl ? 'This page IS controlled by a Service Worker' : 'This page is NOT controlled by a Service Worker');
+        $messages.className = className;
+        $messages.innerHTML = message;
 
-    const underControl = swc.isServiceWorkerSupported() ? navigator.serviceWorker.controller : false;
-    const className = (underControl ? 'controller-present' : 'controller-absent');
-    const message = (underControl ? 'This page IS controlled by a Service Worker' : 'This page is NOT controlled by a Service Worker');
-    $messages.className = className;
-    $messages.innerHTML = message;
-
-    swc.register();
-    // The update button
-    const updateButton = document.getElementById('check-for-updates');
-    updateButton.addEventListener('click', function () {
-        swc.update(true);
-    });
-    // The load-time date stamp
-    const dateStamp = document.getElementById('time-stamp');
-    const loadDate = new Date();
-    dateStamp.innerHTML = `Last reload: ${loadDate.toDateString()} @ ${loadDate.toLocaleTimeString()}` ;
+        // The update button
+        const updateButton = document.getElementById('check-for-updates');
+        updateButton.addEventListener('click', async function () {
+            wb.update().then(reg => {
+                debug.log('workbox update() completed', reg);
+                // this._logRegistrationState(reg, 'Update check complete. Registration state:');
+            });
+        });
+        // The load-time date stamp
+        const dateStamp = document.getElementById('time-stamp');
+        const loadDate = new Date();
+        dateStamp.innerHTML = `Last reload: ${loadDate.toDateString()} @ ${loadDate.toLocaleTimeString()}` ;
+    }
 
 </script>
 </body>

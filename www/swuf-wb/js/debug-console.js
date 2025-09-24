@@ -36,4 +36,4 @@ class DebugConsole {
     }
 }
 
-export default DebugConsole;
+self.DebugConsole = DebugConsole;

@@ -49,4 +49,4 @@ class  AppAsserter {
         throw new Error(`${message}\nCaller: ${new Error().stack.split('\n')[frame]?.trim()}`);
     }
 }
-export const assert = new AppAsserter();
+const assert = new AppAsserter();

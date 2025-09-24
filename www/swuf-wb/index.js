@@ -3,7 +3,9 @@ const BUILD_DATE = '__BUILD_DATE';
 const BUILD_NUMBER = '__BUILD_NUMBER';
 const APP_VERSION = '__APP_VERSION';
 
-const APP_NAME = 'Safe Area Insets Demo';
+const APP_NAME = 'Service Worker Update Flow Demo';
 
-console.log(`Running ${APP_NAME} [${APP_VERSION}]`);
+const debug = new DebugConsole("index.js");
+
+debug.log(`Running ${APP_NAME} [${APP_VERSION}]`);
 document.getElementById('version').innerHTML = APP_VERSION;

@@ -1,8 +1,5 @@
 import {Workbox} from 'https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-window.prod.mjs';
-import assert from './assert.js';
-import DebugConsole from './debug-console.js';
-
-
+import {assert} from './assert.js';
 
 export class WorkboxServiceWorkerClient {
 
@@ -21,44 +18,113 @@ export class WorkboxServiceWorkerClient {
         this.url = url;
         this.ui = ui;
         this.debug = debug;
+        this.workbox = new Workbox(this.url);
+
+
+        // https://developer.chrome.com/docs/workbox/modules/workbox-window
+
+
+        this.workbox.addEventListener('activated', event => {
+            // `event.isUpdate` will be true if another version of the service
+            // worker was controlling the page when this version was registered.
+            if (!event.isUpdate) {
+                this.debug.log('Service worker activated for the first time!');
+                // If your service worker is configured to precache assets, those
+                // assets should all be available now.
+            }
+        });
+
+        this.workbox.addEventListener('waiting', event => {
+            const message = `A new service worker has installed, but it can't activate` +
+                `until all tabs running the current version have fully unloaded.`
+            this.debug.log(message);
+            alert(message);
+        });
+
+        this.workbox.addEventListener('message', event => {
+            this.debug.log(`[Event] message: `, event);
+            if (event.data.type === 'CACHE_UPDATED') {
+                const {updatedURL} = event.data.payload;
+
+                this.debug.log(`A newer version of ${updatedURL} is available!`);
+            }
+        });
+
+        this.workbox.addEventListener('installed', event => {
+            this.debug.log(`[Event] installed: `, event);
+            if (!event.isUpdate) {
+                // First-installed code goes here...
+                this.debug.log(`A service worker has been installed for the first time! (This is not an update.)`);
+            }
+            if (event.isUpdate) {
+                // Update code goes here...
+                // Note: some developers use the installed event to inform users that a new version of their site is
+                // available. However, depending on whether you call skipWaiting() in the installing service worker,
+                // that installed service worker may or may not become active right away. If you do call skipWaiting()
+                // then it's best to inform users of the update once the new service worker has activated, and if you
+                // don't call skipWaiting it's better to inform them of the pending update in the waiting event
+                // (see below for more details).
+                this.debug.log(`A new service worker has installed (updating a previous one).`);
+            }
+        });
+
+        this.workbox.addEventListener('waiting', event => {
+            this.debug.log(`[Event] waiting: `, event);
+            this.debug.log(`A service worker has installed but it's stuck in the waiting phase.`, event);
+        });
+
+        this.workbox.addEventListener('controlling', event => {
+            this.debug.log(`[Event] controlling: `, event);
+            this.debug.log(`A service worker is now controlling this page.`, event);
+        });
+
+        this.workbox.addEventListener('activated', event => {
+            this.debug.log(`[Event] activated: `, event);
+            this.debug.log(`The service worker has now activated.`, event);
+        });
 
         // Brilliant prolyfil by dfabulich
         // https://github.com/w3c/ServiceWorker/issues/1222#issuecomment-351566460
-        if (!('waiting' in navigator.serviceWorker)) {
-            navigator.serviceWorker.waiting = new Promise(function (resolve) {
-                navigator.serviceWorker.ready.then(function (reg) {
-                    function awaitStateChange() {
-                        reg.installing.addEventListener('statechange', function () {
-                            if (this.state === 'installed') resolve(reg);
-                        });
-                    }
-
-                    if (reg.waiting) resolve(reg);
-                    if (reg.installing) awaitStateChange();
-                    reg.addEventListener('updatefound', awaitStateChange);
-                })
-            });
-        }
+        // if (!('waiting' in navigator.serviceWorker)) {
+        //     navigator.serviceWorker.waiting = new Promise(function (resolve) {
+        //         navigator.serviceWorker.ready.then(function (reg) {
+        //             function awaitStateChange() {
+        //                 reg.installing.addEventListener('statechange', function () {
+        //                     if (this.state === 'installed') resolve(reg);
+        //                 });
+        //             }
+        //
+        //             if (reg.waiting) resolve(reg);
+        //             if (reg.installing) awaitStateChange();
+        //             reg.addEventListener('updatefound', awaitStateChange);
+        //         })
+        //     });
+        // }
     }
 
     register() {
 
         if (this._isServiceWorkerUnsupported()) return;
 
+
         this.debug.log('Registering service worker...');
-        navigator.serviceWorker.register(url)
-            .then(reg=> {
-                this.debug.log("Service worker registered.");
-                this._logRegistrationState(reg, 'Service worker registered');
-                navigator.serviceWorker.waiting.then(reg => {
-                    this.debug.log('New waiting service worker found.');
-                    this.handleUpdateTo(reg, false);
-                });
-                this.listenForControllerChangeAndReloadWhenItDoes();
-            })
-            .catch(err => {
-                this.debug.error('Error registering service worker: ', err);
-            });
+        this.workbox.register();
+
+        return;
+
+        // navigator.serviceWorker.register(url)
+        //     .then(reg=> {
+        //         this.debug.log("Service worker registered.");
+        //         this._logRegistrationState(reg, 'Service worker registered');
+        //         navigator.serviceWorker.waiting.then(reg => {
+        //             this.debug.log('New waiting service worker found.');
+        //             this.handleUpdateTo(reg, false);
+        //         });
+        //         this.listenForControllerChangeAndReloadWhenItDoes();
+        //     })
+        //     .catch(err => {
+        //         this.debug.error('Error registering service worker: ', err);
+        //     });
     }
 
     /**
@@ -72,27 +138,33 @@ export class WorkboxServiceWorkerClient {
 
         this.debug.log(`Checking for updates to service worker (updateButtonPressed=${updateButtonPressed})`);
 
-        // Call register as this will trigger an error if the user if offline.
-        navigator.serviceWorker.register(url).then(async reg => {
-            await fetch(url, {method: 'HEAD'}); // trigger error if offline.
-            reg.update().then(reg => {
-                this._logRegistrationState(reg, 'Update check complete. Registration state:');
-                if (this._isUpdateAvailable(reg)) {
-                    debug.log('Update found by update checker. Handling it...');
-                    handleUpdateTo(reg, updateButtonPressed);
-                }
-                else {
-                    debug.log('No update found.');
-                    if (updateButtonPressed) {
-                        this.ui.updateNotFound();
-                    }
-                }
-            });
-        })
-        .catch(err =>{
-            debug.error('Error getting service worker registration: ', err);
-            this.ui.updateError(err);
+        this.workbox.update().then(reg => {
+            this._logRegistrationState(reg, 'Update check complete. Registration state:');
         });
+
+
+
+        // Call register as this will trigger an error if the user if offline.
+        // navigator.serviceWorker.register(url).then(async reg => {
+        //     await fetch(url, {method: 'HEAD'}); // trigger error if offline.
+        //     reg.update().then(reg => {
+        //         this._logRegistrationState(reg, 'Update check complete. Registration state:');
+        //         if (this._isUpdateAvailable(reg)) {
+        //             debug.log('Update found by update checker. Handling it...');
+        //             handleUpdateTo(reg, updateButtonPressed);
+        //         }
+        //         else {
+        //             debug.log('No update found.');
+        //             if (updateButtonPressed) {
+        //                 this.ui.updateNotFound();
+        //             }
+        //         }
+        //     });
+        // })
+        // .catch(err =>{
+        //     debug.error('Error getting service worker registration: ', err);
+        //     this.ui.updateError(err);
+        // });
     }
 
     //--------------------------------------------------------------------------------------------------------------
@@ -101,6 +173,7 @@ export class WorkboxServiceWorkerClient {
     isServiceWorkerSupported() {
         return !this._isServiceWorkerUnsupported();
     }
+
     _isServiceWorkerUnsupported() {
         if (!('serviceWorker' in navigator)) {
             debug.warn('Service Workers are not supported by this browser.');
@@ -155,6 +228,8 @@ export class WorkboxServiceWorkerClient {
     }
 
     handleUpdateTo(reg, updateButtonPressed = false) {
+        return;
+
         if (!updateButtonPressed && updateButtonHasBeenPressed) {
             // Block call from the waiting promise which comes after call from update checker the first time.
             // Otherwise we run the update routine twice that time.
