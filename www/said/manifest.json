@@ -1,6 +1,6 @@
 {
   "name": "Safe Area Insets Sim Demo",
-  "short_name": "InsetsDemo",
+  "short_name": "SAID Demo",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ff7043",

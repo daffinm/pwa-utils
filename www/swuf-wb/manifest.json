@@ -1,0 +1,13 @@
+{
+  "name": "Test Service Worker Update Flow",
+  "short_name": "Test SWUF",
+  "description": "How do we get Service Worker updates working?",
+  "background_color": "#0C6A8B",
+  "theme_color": "#0C6A8B",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": ".",
+  "dir": "ltr",
+  "lang": "en-UK"
+}

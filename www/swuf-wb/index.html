@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sw test</title>
+    <meta id="meta-viewport" name="viewport"
+          content="user-scalable=yes, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, viewport-fit=cover">
+
+<!--    <script type="module" src="js/assert.js"></script>-->
+<!--    <script type="module" src="js/debug-console.js"></script>-->
+<!--    <script type="module" src="js/sw-client-wb.js"></script>-->
+
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 19px;
+        }
+        #status-messages {
+            --status-color: black;
+            font-weight: bold;
+            color: white;
+            background-color: var(--status-color);
+            padding: 10px;
+            border: solid 1px var(--status-color);
+            width: fit-content;
+            border-radius: 10px;
+        }
+        #status-messages.controller-present {
+            --status-color: #57c100;
+        }
+        #status-messages.controller-absent {
+            --status-color: indianred;
+        }
+        #time-stamp {
+            font-weight: bold;
+            color: white;
+            background-color: cornflowerblue;
+            padding: 10px;
+            border: solid 1px cornflowerblue;
+            width: fit-content;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<h1>Service Worker Test</h1>
+<p><b>Version: </b><span id="version"></span></p>
+<div id="status-messages"></div>
+<ol>
+    <li>Open the dev tools console ASAP and check the console messages to see what's happening in the background.</li>
+    <li>Simulate an upate by adding/removing spaces from the end of the <i>sw.js</i> file.</li>
+    <li>Press the 'Check for updates' button</li>
+    <li>Play with accepting and rejecting updates at different times.</li>
+    <li>Note what happens if an update is found when the page is NOT controlled by the service worker.</li>
+    <li>Go offline and then press 'check for updates'. </li>
+</ol>
+<p>
+    Note that changing any file other than the sw.js file
+    <a href="https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#updates" target="_blank">does NOT count as an update</a>.
+</p>
+<button id="check-for-updates">Check for updates...</button>
+<div id="time-stamp"></div>
+
+<script type="module" src="./index.js"></script>
+
+<script type="module">
+    import DebugConsole from './js/debug-console.js';
+    import WorkboxServiceWorkerClient from './js/sw-client-wb';
+    import SimpleUI from './js/sw-client-wb';
+
+    const debug = new DebugConsole('Application', 'cornflowerblue', 'white');
+    debug.heading('Starting up...');
+    // Status messages - so we can see what's going on.
+    const $messages = document.getElementById('status-messages');
+
+
+    const swc = new WorkboxServiceWorkerClient('sw.js', new SimpleUI(debug));
+
+    const underControl = swc.isServiceWorkerSupported() ? navigator.serviceWorker.controller : false;
+    const className = (underControl ? 'controller-present' : 'controller-absent');
+    const message = (underControl ? 'This page IS controlled by a Service Worker' : 'This page is NOT controlled by a Service Worker');
+    $messages.className = className;
+    $messages.innerHTML = message;
+
+    swc.register();
+    // The update button
+    const updateButton = document.getElementById('check-for-updates');
+    updateButton.addEventListener('click', function () {
+        swc.update(true);
+    });
+    // The load-time date stamp
+    const dateStamp = document.getElementById('time-stamp');
+    const loadDate = new Date();
+    dateStamp.innerHTML = `Last reload: ${loadDate.toDateString()} @ ${loadDate.toLocaleTimeString()}` ;
+
+</script>
+</body>
+</html>

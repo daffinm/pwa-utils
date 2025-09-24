@@ -4,5 +4,5 @@
 BUILD_RELEASE="1.0.0"
 # The following are updated automatically by the build script.
 BUILD_DATE="20250924"
-BUILD_NUMBER="16"
+BUILD_NUMBER="23"
 APP_VERSION="${BUILD_RELEASE}.${BUILD_DATE}#${BUILD_NUMBER}"
