@@ -8,17 +8,5 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        (async () => {
-            const clients = await self.clients.matchAll({ type: 'window' });
-            for (const client of clients) {
-                client.navigate(client.url);
-            }
-            self.clients.claim();
-        })()
-    );
-});
-
-self.addEventListener('fetch', event => {
-    event.respondWith(fetch(event.request));
+    self.clients.claim();
 });

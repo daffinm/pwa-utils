@@ -6,3 +6,4 @@ const APP_VERSION = '__APP_VERSION';
 const APP_NAME = 'Safe Area Insets Demo';
 
 console.log(`Running ${APP_NAME} [${APP_VERSION}]`);
+document.getElementById('version').innerHTML = APP_VERSION;

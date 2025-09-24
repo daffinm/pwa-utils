@@ -1,3 +1,9 @@
+const BUILD_RELEASE = '__BUILD_RELEASE';
+const BUILD_DATE = '__BUILD_DATE';
+const BUILD_NUMBER = '__BUILD_NUMBER';
+const APP_VERSION = '__APP_VERSION';
+
+
 const DEBUG_LOGGING = true;
 const WORKBOX_DEBUG = false;
 
@@ -31,8 +37,8 @@ const WORKBOX_VERSION = "5.1.2";
 importScripts(`https://storage.googleapis.com/workbox-cdn/releases/${WORKBOX_VERSION}/workbox-sw.js`);
 workbox.setConfig({debug: WORKBOX_DEBUG});
 workbox.core.setCacheNameDetails({
-    prefix: 'test',
-    suffix: 'v1.0.0',
+    prefix: 'swuf',
+    suffix: `v${BUILD_RELEASE}`,
     precache: 'installtime',
     runtime: 'runtime',
 });
